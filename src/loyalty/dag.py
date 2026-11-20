@@ -6,7 +6,7 @@ ENCOURAGEMENT = "welcome_offer"
 TREATMENT = "enrolled"
 OUTCOME = "spend90"
 CONFOUNDERS = {"income", "deal_seeking", "store_region"}
-COLLIDERS = {"survey_response"}
+COLLIDERS = {"survey_responded"}
 MEDIATORS = {"store_visits"}
 AFTER_TREATMENT = {"store_visits", "survey_response"}
 LATENT = "deal_seeking"
@@ -119,7 +119,18 @@ def plot_dag(g: nx.DiGraph, ax=None):
 def backdoor_paths(g: nx.DiGraph, treatment: str, outcome: str) -> list[list[str]]:
     """Return all backdoor paths: paths from treatment to outcome whose
     first edge points INTO the treatment."""
-    raise NotImplementedError
+    undirected = g.to_undirected()
+    paths = []
+
+    for parent in g.predecessors(treatment):
+        if parent == outcome:
+            continue
+        for path in nx.all_simple_paths(undirected, treatment, outcome):
+            if len(path) >= 3 and path[1] == parent:
+                paths.append(path)
+
+    # Preserve a stable, readable order in plots and notebook output.
+    return sorted(paths, key=lambda path: tuple(path))
 
 
 
